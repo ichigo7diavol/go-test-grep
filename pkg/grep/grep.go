@@ -58,10 +58,11 @@ func Execute(config Config) error {
 			go processFileWorker(config, jobs, results, &wg)
 		}
 		go func() {
+			defer close(results)
 			wg.Wait()
-			close(results)
 		}()
 		go func() {
+			defer close(jobs)
 			processDirectoryWithFunction(
 				config.Target,
 				config.IsRecursive,
@@ -78,7 +79,6 @@ func Execute(config Config) error {
 					return nil
 				},
 			)
-			close(jobs)
 		}()
 
 		for result := range results {
