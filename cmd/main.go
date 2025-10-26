@@ -4,38 +4,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ichigo7diavol/go-test-grep/pkg/grep"
 	"github.com/spf13/cobra"
 )
 
-var cfg Config
+const (
+	MaximumNArgs = 2
+)
+
+var cfg grep.Config
 var rootCmd = &cobra.Command{
 	Use:   "go-grep [target]",
 	Short: "go-grep — grep like app written with go",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.MaximumNArgs(MaximumNArgs),
 	RunE:  onRootCommandRun,
-}
-
-type Config struct {
-	target string
-
-	isRecursive bool
-	isVerbose   bool
-}
-
-func GetConfig() Config {
-	return cfg
-}
-
-func (c Config) GetTarget() string {
-	return c.target
-}
-
-func (c Config) GetIsRecursive() bool {
-	return c.isRecursive
-}
-
-func (c Config) GetIsVerbose() bool {
-	return c.isVerbose
 }
 
 func Main() {
@@ -43,9 +25,10 @@ func Main() {
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&cfg.target, "target", "t", "./", "target")
-	rootCmd.Flags().BoolVarP(&cfg.isRecursive, "recursive", "r", false, "is recursive")
-	rootCmd.Flags().BoolVarP(&cfg.isVerbose, "verbose", "v", false, "verbosity")
+	rootCmd.Flags().StringVarP(&cfg.Expression, "expression", "e", "./", "regex expression")
+	rootCmd.Flags().StringVarP(&cfg.Target, "target", "t", "./", "target")
+	rootCmd.Flags().BoolVarP(&cfg.IsRecursive, "recursive", "r", false, "is recursive")
+	rootCmd.Flags().BoolVarP(&cfg.IsVerbose, "verbose", "v", false, "is verbose")
 }
 
 func main() {
@@ -55,9 +38,16 @@ func main() {
 	}
 }
 
-func onRootCommandRun(cmd *cobra.Command, args []string) error {
-	if len(args) > 0 {
-		cfg.target = args[0]
+func parseArgs(args []string) {
+	if len(args) >= 1 {
+		cfg.Expression = args[0]
 	}
-	return nil
+	if len(args) >= 2 {
+		cfg.Target = args[1]
+	}
+}
+
+func onRootCommandRun(cmd *cobra.Command, args []string) error {
+	parseArgs(args)
+	return grep.Execute(cfg)
 }
